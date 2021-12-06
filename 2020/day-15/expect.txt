@@ -1,0 +1,10 @@
+Turn 1: 0.
+Turn 2: 3.
+Turn 3: 6.
+Turn 4: 0.
+Turn 5: 3.
+Turn 6: 3.
+Turn 7: 1.
+Turn 8: 0.
+Turn 9: 4.
+Turn 10: 0.
