@@ -3,10 +3,6 @@ depths =
   |> String.split("\n")
   |> Enum.map(&String.to_integer/1)
 
-Enum.zip_with(
-  depths,
-  Enum.drop(depths, 1),
-  fn a, b -> if a < b, do: 1, else: 0 end
-)
-|> Enum.sum()
+Enum.zip(depths, depths |> Enum.drop(1))
+|> Enum.count(fn {a, b} -> a < b end)
 |> IO.puts()

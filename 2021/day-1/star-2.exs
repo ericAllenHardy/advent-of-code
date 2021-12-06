@@ -3,19 +3,16 @@ depths =
   |> String.split("\n")
   |> Enum.map(&String.to_integer/1)
 
-windows =
-  List.zip([
+windowed_sums =
+  List.zip_with([
     depths,
-    Enum.drop(depths, 1),
-    Enum.drop(depths, 2)
-  ])
-  |> Enum.map(fn {a, b, c} -> a + b + c end)
+    depths |> Enum.drop(1),
+    depths |> Enum.drop(2)
+  ], &Enum.sum/1)
 
-Enum.zip_with(
-  windows,
-  Enum.drop(windows, 1),
-  &(&1 < &2)
+Enum.zip(
+  windowed_sum,
+  windowed_sum |> Enum.drop(1),
 )
-|> Enum.filter(& &1)
-|> length()
+|> Enum.count(fn {a, b} -> a < b end)
 |> IO.puts()

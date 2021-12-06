@@ -8,28 +8,9 @@ defmodule Star do
     }
   end
 
-  def horizontal_or_vertical?({{x1, y1}, {x2, y2}}) do
-    x1 == x2 or y1 == y2
-  end
+  def horizontal_or_vertical?({{x1, y1}, {x2, y2}}), do: x1 == x2 or y1 == y2
 
-  def count_points(lines) do
-    count_points(lines, %{})
-  end
-
-  defp count_points([], counts), do: counts
-
-  defp count_points([line | lines], counts) do
-    new_counts =
-      line
-      |> points_for_line()
-      |> Enum.reduce(counts, fn point, cs ->
-        Map.update(cs, point, 1, &(&1 + 1))
-      end)
-
-    count_points(lines, new_counts)
-  end
-
-  defp points_for_line({{x1, y1}, {x2, y2}}) do
+  def points_for_line({{x1, y1}, {x2, y2}}) do
     for x <- x1..x2,
         y <- y1..y2 do
       {x, y}
@@ -37,13 +18,16 @@ defmodule Star do
   end
 end
 
-lines =
-  File.read!("./input.txt")
-  |> String.split("\n")
-  |> Enum.map(&Star.parse_line/1)
-  |> Enum.filter(&Star.horizontal_or_vertical?/1)
-
-Star.count_points(lines)
-|> Enum.filter(fn {_, count} -> count >= 2 end)
-|> length()
+File.read!("./input.txt")
+|> String.split("\n")
+|> Enum.map(&Star.parse_line/1)
+|> Enum.flat_map(fn coords ->
+  if Star.horizontal_or_vertical?(coords) do
+    Star.points_for_line(coords)
+  else
+    []
+  end
+end)
+|> Enum.frequencies()
+|> Enum.count(fn {_, count} -> count >= 2 end)
 |> IO.puts()

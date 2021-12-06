@@ -5,26 +5,30 @@ defmodule Star do
         }
 
   def parse(file) do
-    [draws_line | board_chunks] =
-      File.read!(file)
-      |> String.split("\n\n")
+    [draws | boards] = File.read!(file) |> String.split("\n\n")
 
-    draws = draws_line |> String.split(",") |> Enum.map(&String.to_integer/1)
-    boards = board_chunks |> Enum.map(&parse_board/1)
-
-    {draws, boards}
+    {
+      draws |> String.split(",") |> Enum.map(&String.to_integer/1),
+      boards |> Enum.map(&parse_board/1)
+    }
   end
 
   defp parse_board(board_chunk) do
     %{
       board:
-        for {line, r} <- board_chunk |> String.split("\n") |> Enum.with_index(),
-            {n, c} <- line |> String.split() |> Enum.with_index(),
+        for {line, r} <- String.split(board_chunk, "\n") |> Enum.with_index(),
+            {n, c} <- String.split(line) |> Enum.with_index(),
             into: %{} do
           {String.to_integer(n), {r, c}}
         end,
       seen: MapSet.new()
     }
+  end
+
+  def not_seen(board) do
+    board.board
+    |> Enum.filter(fn {_n, coord} -> not MapSet.member?(board.seen, coord) end)
+    |> Enum.map(&elem(&1, 0))
   end
 
   def add_draw_to_board(board, draw) do
@@ -34,28 +38,18 @@ defmodule Star do
     end
   end
 
-  def board_wins?(board) do
-    row_match =
-      for i <- 0..5 do
-        row_items = Enum.filter(board.seen, fn {r, _c} -> r == i end)
-        length(row_items) == 5
-      end
-      |> Enum.any?(&(length(&1) == 5))
+  def board_wins?(board), do: row_match?(board.seen) or col_match?(board.seen)
 
-    col_match =
-      for i <- 0..5 do
-        col_items = Enum.filter(board.seen, fn {_r, c} -> c == i end)
-        length(col_items) == 5
-      end
-      |> Enum.any?()
-
-    row_match or col_match
+  defp row_match?(seen) do
+    Enum.find(0..5, fn row ->
+      Enum.count(seen, fn {r, _c} -> r == row end) == 5
+    end) != nil
   end
 
-  def not_seen(board) do
-    board.board
-    |> Enum.filter(fn {_n, coord} -> not MapSet.member?(board.seen, coord) end)
-    |> Enum.map(&elem(&1, 0))
+  defp col_match?(seen) do
+    Enum.find(0..5, fn col ->
+      Enum.count(seen, fn {_r, c} -> c == col end) == 5
+    end) != nil
   end
 end
 
@@ -65,7 +59,9 @@ end
   Enum.reduce_while(draws, boards, fn draw, boards ->
     new_boards = Enum.map(boards, &Star.add_draw_to_board(&1, draw))
 
-    case Enum.filter(new_boards, fn b -> not Star.board_wins?(b) end) do
+    new_boards
+    |> Enum.filter(&(not Star.board_wins?(&1)))
+    |> case do
       [] ->
         {:halt, {draw, List.first(new_boards)}}
 
